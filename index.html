@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Settings AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-active { background-color: rgba(255,255,255,0.1); border-left: 4px solid #f97316; }
+        .tab-btn { transition: all 0.2s ease; border: 1px solid #3b82f6; color: #3b82f6; }
+        .tab-btn.active { background-color: #3b82f6; color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
+        .card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .input-focus { focus:ring-2; focus:ring-blue-500; focus:border-blue-500; outline: none; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+
+    <header class="bg-[#1e293b] text-white h-14 flex items-center justify-between px-4 fixed w-full z-20">
+        <div class="flex items-center gap-4">
+            <div class="bg-orange-500 p-1.5 rounded-md"><i data-lucide="layout-grid" class="w-5 h-5"></i></div>
+            <span class="font-medium">My Apps</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 opacity-70"></i>
+        </div>
+        <div class="flex-1 max-w-2xl px-8">
+            <div class="relative">
+                <input type="text" placeholder="Type to search" class="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg py-1.5 px-4 pr-10 focus:bg-white focus:text-slate-900 transition-all outline-none">
+                <i data-lucide="search" class="absolute right-3 top-2 text-slate-400 w-4 h-4"></i>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+            <div class="flex items-center gap-2 border border-slate-700 rounded-md px-3 py-1 bg-slate-800/50">
+                <i data-lucide="store" class="w-4 h-4"></i>
+                <span>Corporate</span>
+                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            </div>
+            <i data-lucide="settings" class="w-5 h-5 text-slate-400 cursor-pointer hover:text-white"></i>
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-xs ring-2 ring-slate-700">US</div>
+        </div>
+    </header>
+
+    <div class="flex pt-14 h-screen">
+        <aside class="w-16 bg-[#1e293b] flex flex-col items-center py-6 gap-8 text-white fixed h-full border-r border-slate-800">
+            <i data-lucide="home" class="w-5 h-5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"></i>
+            <div class="w-full flex justify-center py-3 sidebar-active">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            </div>
+            <i data-lucide="file-text" class="w-5 h-5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"></i>
+        </aside>
+
+        <main class="ml-16 flex-1 p-8 overflow-y-auto">
+            
+            <div id="listView">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-slate-800">Dashboards</h1>
+                        <p class="text-slate-500 text-sm">Manage and configure your application monitoring views.</p>
+                    </div>
+                    <div class="relative">
+                        <button onclick="document.getElementById('addDropdown').classList.toggle('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold transition-all shadow-lg shadow-blue-500/20">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Dashboard
+                        </button>
+                        <div id="addDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-30 py-2 border-slate-200">
+                            <div class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Select Type</div>
+                            <button onclick="addDashboard('Store Health')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Store Health</button>
+                            <button onclick="addDashboard('Compliance')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Compliance</button>
+                            <button onclick="addDashboard('Risk Analysis')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Risk Analysis</button>
+                            <button onclick="addDashboard('Time Loss')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Time Loss</button>
+                            <button onclick="addDashboard('DAR')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">DAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Dashboard</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Friendly Name</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardTableBody" class="divide-y divide-slate-100">
+                            </tbody>
+                    </table>
+                    <div id="emptyState" class="p-20 text-center">
+                        <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="layers" class="w-8 h-8 text-slate-300"></i>
+                        </div>
+                        <p class="text-slate-400 font-medium">No dashboards added yet. Click the button above to start.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editView" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <button onclick="showListView()" class="group text-blue-600 flex items-center gap-2 mb-2 text-sm font-semibold hover:underline">
+                            <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i> Back to list
+                        </button>
+                        <h2 class="text-2xl font-bold text-slate-800" id="editingTitle">Editing: Time Loss</h2>
+                    </div>
+                    <button onclick="saveAll()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i> Save Changes
+                    </button>
+                </div>
+
+                <div class="flex gap-4 mb-8 bg-white p-2 rounded-2xl border border-slate-200 inline-flex">
+                    <button onclick="switchTab('general')" id="tab-general" class="tab-btn active px-6 py-2 rounded-xl text-sm font-bold">General Settings</button>
+                    <button onclick="switchTab('sections')" id="tab-sections" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Sections</button>
+                    <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Applications</button>
+                    <button onclick="switchTab('roles')" id="tab-roles" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Roles</button>
+                </div>
+
+                <div class="card p-8 min-h-[500px]">
+                    <div id="content-general" class="tab-pane">
+                        <div class="max-w-xl space-y-8">
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div>
+                                    <label class="block font-bold text-slate-700">Task Status</label>
+                                    <p class="text-xs text-slate-500">Enable or disable this dashboard across the site.</p>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span id="statusLabel" class="text-sm font-bold text-green-600">ACTIVE</span>
+                                    <button onclick="toggleStatusEdit()" id="statusToggle" class="w-14 h-7 bg-green-500 rounded-full relative transition-all duration-300">
+                                        <div id="toggleDot" class="absolute right-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm transition-all"></div>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Dashboard Name</label>
+                                <input type="text" id="editDashboardName" disabled class="w-full p-3 border border-slate-200 bg-slate-100 rounded-lg text-slate-500 font-medium">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="content-sections" class="tab-pane hidden">
+                        <div class="flex flex-wrap gap-4 items-end mb-8 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            <div class="w-64">
+                                <label class="block text-xs font-bold text-blue-700 mb-1.5 uppercase tracking-wider">Section Layout</label>
+                                <select id="colSelect" class="w-full border-slate-200 p-2.5 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="1">1 Column</option>
+                                    <option value="2">2 Column</option>
+                                    <option value="3">3 Column</option>
+                                    <option value="5">5 Column</option>
+                                    <option value="8">8 Column</option>
+                                </select>
+                            </div>
+                            <button onclick="addNewSection()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-md shadow-green-600/20">
+                                <i data-lucide="plus" class="w-5 h-5"></i> Add New Section
+                            </button>
+                        </div>
+                        
+                        <div class="border rounded-xl overflow-hidden">
+                            <table class="w-full text-center">
+                                <thead class="bg-slate-50 border-b border-slate-100">
+                                    <tr>
+                                        <th class="p-4 text-[15px] font-bold text-slate-400 uppercase w-20">ID</th>
+                                        <th class="p-4 text-[15px] font-bold text-slate-400 uppercase w-60">Section Type</th>
+                                        <th class="p-4 text-[15px] font-bold text-slate-400 uppercase">Components Configuration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sectionTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="content-apps" class="tab-pane hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Forecast</span>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Inventory</span>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Ordering</span>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Payroll</span>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Checklist</span>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Labor</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="content-roles" class="tab-pane hidden">
+                        <div class="space-y-3 max-w-md">
+                            <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors">
+                                <span class="font-semibold text-slate-700">Manager</span>
+                                <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                            </label>
+                            <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors">
+                                <span class="font-semibold text-slate-700">Shift Manager</span>
+                                <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                            </label>
+                            <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors">
+                                <span class="font-semibold text-slate-700">Supervisor</span>
+                                <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                            </label>
+                            <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors">
+                                <span class="font-semibold text-slate-700">Assistant Mananger</span>
+                                <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let dashboards = [];
+        let currentEditingIndex = -1;
+        let globalSectionCounter = 0;
+
+        function addDashboard(type) {
+            const idNumber = dashboards.length + 1;
+            const id = `D_0${idNumber}`;
+            dashboards.push({
+                id,
+                name: type,
+                friendlyName: type,
+                status: true,
+                sections: []
+            });
+            document.getElementById('addDropdown').classList.add('hidden');
+            renderTable();
+        }
+
+        function renderTable() {
+            const body = document.getElementById('dashboardTableBody');
+            const empty = document.getElementById('emptyState');
+            
+            if (dashboards.length > 0) empty.classList.add('hidden');
+            
+            body.innerHTML = dashboards.map((db, i) => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-4 font-mono text-sm text-slate-400 font-medium">${db.id}</td>
+                    <td class="p-4 font-bold text-slate-700">${db.name}</td>
+                    <td class="p-4">
+                        <input type="text" value="${db.friendlyName}" onchange="dashboards[${i}].friendlyName=this.value" 
+                        class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:bg-white px-2 py-1 rounded w-full transition-all outline-none font-medium">
+                    </td>
+                    <td class="p-4 text-center">
+                        <span class="status-pill ${db.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${db.status ? 'Active' : 'Inactive'}
+                        </span>
+<td class="p-4">
+    <div class="flex items-center justify-center">
+        <button 
+            onclick="editDashboard(${i})"
+            class="w-9 h-9 flex items-center justify-center
+                   rounded-full bg-blue-500 hover:bg-blue-600
+                   transition-colors shadow-sm"
+            title="Edit"
+        >
+            <i data-lucide="pencil" class="w-4 h-4 text-white"></i>
+        </button>
+    </div>
+</td>
+
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function editDashboard(index) {
+            currentEditingIndex = index;
+            const db = dashboards[index];
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('editView').classList.remove('hidden');
+            document.getElementById('editingTitle').innerText = `Editing: ${db.name}`;
+            document.getElementById('editDashboardName').value = db.name;
+            updateToggleUI(db.status);
+            renderSections();
+            switchTab('general');
+        }
+
+        function showListView() {
+            document.getElementById('listView').classList.remove('hidden');
+            document.getElementById('editView').classList.add('hidden');
+            renderTable();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // TOGGLE LOGIC
+        function toggleStatusEdit() {
+            dashboards[currentEditingIndex].status = !dashboards[currentEditingIndex].status;
+            updateToggleUI(dashboards[currentEditingIndex].status);
+        }
+
+        function updateToggleUI(isActive) {
+            const toggle = document.getElementById('statusToggle');
+            const dot = document.getElementById('toggleDot');
+            const label = document.getElementById('statusLabel');
+            
+            if (isActive) {
+                toggle.className = "w-14 h-7 bg-green-500 rounded-full relative transition-all duration-300";
+                dot.style.right = '4px'; dot.style.left = 'auto';
+                label.innerText = 'ACTIVE'; label.className = 'text-sm font-bold text-green-600';
+            } else {
+                toggle.className = "w-14 h-7 bg-red-500 rounded-full relative transition-all duration-300";
+                dot.style.left = '4px'; dot.style.right = 'auto';
+                label.innerText = 'INACTIVE'; label.className = 'text-sm font-bold text-red-600';
+            }
+        }
+
+        // SECTIONS LOGIC
+        function addNewSection() {
+            const colCount = parseInt(document.getElementById('colSelect').value);
+            globalSectionCounter++;
+            const newSec = {
+                id: `S_${globalSectionCounter}`,
+                type: colCount,
+                components: ['New Component']
+            };
+            dashboards[currentEditingIndex].sections.push(newSec);
+            renderSections();
+        }
+
+        function renderSections() {
+            const container = document.getElementById('sectionTableBody');
+            const sections = dashboards[currentEditingIndex].sections;
+            
+            container.innerHTML = sections.map((sec, sIdx) => `
+                <tr class="align-top">
+                    <td class="p-4 font-mono text-xs text-slate-400 font-bold">${sec.id}</td>
+                    <td class="p-4 font-bold text-slate-600">${sec.type} Column</td>
+                    <td class="p-4">
+                        <div class="space-y-3">
+                            ${sec.components.map((c, cIdx) => `
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 relative">
+                                        <input type="text" value="${c}" 
+                                        onchange="dashboards[${currentEditingIndex}].sections[${sIdx}].components[${cIdx}]=this.value"
+                                        class="w-full border border-slate-200 p-2.5 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none border focus:border-blue-400 transition-all">
+                                    </div>
+                                    ${cIdx === sec.components.length - 1 && sec.components.length < sec.type ? `
+                                        <button onclick="addComponentToRow(${sIdx})" class="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors" title="Add component to this column type">
+                                            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                                        </button>
+                                    ` : '<div class="w-10"></div>'}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addComponentToRow(secIdx) {
+            const sec = dashboards[currentEditingIndex].sections[secIdx];
+            if (sec.components.length < sec.type) {
+                sec.components.push('New Component');
+                renderSections();
+            }
+        }
+
+        function saveAll() {
+            alert('Settings Saved Successfully!');
+            showListView();
+        }
+    </script>
+</body>
+</html>
