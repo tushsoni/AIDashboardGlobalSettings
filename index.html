@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Settings AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-active { background-color: rgba(255,255,255,0.1); border-left: 4px solid #f97316; }
+        .tab-btn { transition: all 0.2s ease; border: 1px solid #3b82f6; color: #3b82f6; }
+        .tab-btn.active { background-color: #3b82f6; color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
+        .card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        
+        /* Light Blue Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 10px; border: 2px solid #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #7dd3fc; }
+
+        /* Modal Animation */
+        .modal-backdrop { background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); }
+        .modal-content { animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes popIn {
+            from { transform: scale(0.98); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .component-card {
+            transition: all 0.2s ease;
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 8px;
+            text-align: center;
+        }
+        .component-card:hover {
+            border-color: #3b82f6;
+            background-color: #f8faff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+
+    <header class="bg-[#1e293b] text-white h-14 flex items-center justify-between px-4 fixed w-full z-20">
+        <div class="flex items-center gap-4">
+            <div class="bg-orange-500 p-1.5 rounded-md"><i data-lucide="layout-grid" class="w-5 h-5"></i></div>
+            <span class="font-medium">My Apps</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 opacity-70"></i>
+        </div>
+        <div class="flex-1 max-w-2xl px-8">
+            <div class="relative">
+                <input type="text" placeholder="Type to search" class="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg py-1.5 px-4 pr-10 focus:bg-white focus:text-slate-900 transition-all outline-none">
+                <i data-lucide="search" class="absolute right-3 top-2 text-slate-400 w-4 h-4"></i>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+            <div class="flex items-center gap-2 border border-slate-700 rounded-md px-3 py-1 bg-slate-800/50">
+                <i data-lucide="store" class="w-4 h-4"></i>
+                <span>Corporate</span>
+                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            </div>
+            <i data-lucide="settings" class="w-5 h-5 text-slate-400 cursor-pointer hover:text-white"></i>
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-xs ring-2 ring-slate-700">US</div>
+        </div>
+    </header>
+
+    <div class="flex pt-14 h-screen">
+        <aside class="w-16 bg-[#1e293b] flex flex-col items-center py-6 gap-8 text-white fixed h-full border-r border-slate-800">
+            <i data-lucide="home" class="w-5 h-5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"></i>
+            <div class="w-full flex justify-center py-3 sidebar-active">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            </div>
+            <i data-lucide="file-text" class="w-5 h-5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"></i>
+        </aside>
+
+        <main class="ml-16 flex-1 p-8 overflow-y-auto">
+            <div id="listView">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-slate-800">Dashboards</h1>
+                        <p class="text-slate-500 text-sm">Manage and configure your AI Dashboard Setting</p>
+                    </div>
+                    <div class="relative">
+                        <button onclick="document.getElementById('addDropdown').classList.toggle('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold transition-all shadow-lg shadow-blue-500/20">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Dashboard
+                        </button>
+                        <div id="addDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-30 py-2 border-slate-200">
+                            <div class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Select Dashboard</div>
+                            <button onclick="addDashboard('Store Health')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Store Health</button>
+                            <button onclick="addDashboard('Compliance')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Compliance</button>
+                            <button onclick="addDashboard('Risk Analysis')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Risk Analysis</button>
+                            <button onclick="addDashboard('Time Loss')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">Time Loss</button>
+                            <button onclick="addDashboard('DAR')" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm font-medium">DAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Dashboard</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Friendly Name</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                    <div id="emptyState" class="p-20 text-center">
+                        <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="layers" class="w-8 h-8 text-slate-300"></i>
+                        </div>
+                        <p class="text-slate-400 font-medium">No dashboards added yet. Click the Add Dashboard button above to start.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editView" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <button onclick="showListView()" class="group text-blue-600 flex items-center gap-2 mb-2 text-sm font-semibold hover:underline">
+                            <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i> Back to list
+                        </button>
+                        <h2 class="text-2xl font-bold text-slate-800" id="editingTitle">Editing</h2>
+                    </div>
+                    <button onclick="saveAll()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i> Save Changes
+                    </button>
+                </div>
+
+                <div class="flex gap-4 mb-8 bg-white p-2 rounded-2xl border border-slate-200 inline-flex">
+                    <button onclick="switchTab('general')" id="tab-general" class="tab-btn active px-6 py-2 rounded-xl text-sm font-bold">General Settings</button>
+                    <button onclick="switchTab('sections')" id="tab-sections" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Sections</button>
+                    <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Applications</button>
+                    <button onclick="switchTab('roles')" id="tab-roles" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Roles</button>
+                </div>
+
+                <div class="card p-8 min-h-[500px]">
+                    <div id="content-general" class="tab-pane">
+                        <div class="max-w-xl space-y-8">
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div>
+                                    <label class="block font-bold text-slate-700">Task Status</label>
+                                    <p class="text-xs text-slate-500">Enable or disable this dashboard across the site.</p>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span id="statusLabel" class="text-sm font-bold text-green-600">ACTIVE</span>
+                                    <button onclick="toggleStatusEdit()" id="statusToggle" class="w-14 h-7 bg-green-500 rounded-full relative transition-all duration-300 shadow-inner">
+                                        <div id="toggleDot" class="absolute right-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm transition-all"></div>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Dashboard Name</label>
+                                <input type="text" id="editDashboardName" disabled class="w-full p-3 border border-slate-200 bg-slate-100 rounded-lg text-slate-500 font-medium">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="content-sections" class="tab-pane hidden">
+                        <div class="flex flex-wrap gap-4 items-end mb-8 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            <div class="w-64">
+                                <label class="block text-xs font-bold text-blue-700 mb-1.5 uppercase tracking-wider">Section Layout</label>
+                                <select id="colSelect" class="w-full border-slate-200 p-2.5 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="1">1 Column</option>
+                                    <option value="2">2 Column</option>
+                                    <option value="3">3 Column</option>
+                                    <option value="5">5 Column</option>
+                                </select>
+                            </div>
+                            <button onclick="addNewSection()" class="bg-green-600 hover:bg-green-700 text-white px-2 py-2 rounded-lg flex items-center gap-2 font-bold transition-all shadow-md shadow-green-600/20">
+                                <i data-lucide="plus" class="w-5 h-5"></i> Add New Section
+                            </button>
+                        </div>
+                        
+                        <div class="border rounded-xl overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b border-slate-100">
+                                    <tr>
+                                        <th class="p-4 text-[13px] font-bold text-slate-400 uppercase w-16 text-center">ID</th>
+                                        <th class="p-4 text-[13px] font-bold text-slate-400 uppercase w-48 text-center">Section Type</th>
+                                        <th class="p-4 text-[13px] font-bold text-slate-400 uppercase w-32 text-center">Display Order</th>
+                                        <th class="p-4 text-[13px] font-bold text-slate-400 uppercase text-left">Components Configuration</th>
+                                        <th class="p-4 text-[13px] font-bold text-slate-400 uppercase w-24 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sectionTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="content-apps" class="tab-pane hidden">
+                        <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 w-fit">
+                            <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            <span class="font-medium text-slate-700">Forecast</span>
+                        </div>
+                    </div>
+                    <div id="content-roles" class="tab-pane hidden">
+                        <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors max-w-sm">
+                            <span class="font-semibold text-slate-700">Assistant Manager</span>
+                            <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="componentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
+        <div class="modal-content relative bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Select Dashboard Component</h3>
+                    <p class="text-xs text-slate-500 tracking-tight">Assign a metric to this dashboard slot</p>
+                </div>
+                <button onclick="closeModal()" class="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 border-2 border-red-100 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[65vh] overflow-y-auto bg-white custom-scroll">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="modalOptionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let dashboards = [];
+        let currentEditingIndex = -1;
+        let globalSectionCounter = 0;
+        let activeSelectionContext = null;
+
+        const globalComponents = {
+            "1": ["Risk Analysis Summary", "Store Health Summary", "Time Loss Summary", "HISTORICAL DATA LOG"],
+            "2": ["Labor Performance", "Inventory Control", "Payroll Management", "Cash Control", "Weekly Time Loss Analysis", "Time Loss Trend vs Sales"],
+            "3": ["Attendance Behaviour", "Minors Compliance", "Breaks Management", "Labor Exceptions", "Fair Work Week", "Scheduling Optimization", "Labor Risk", "Inventory Risk", "Compliance Risk", "Schedule Risk", "Sales Risk"],
+            "5": ["Net Sales", "Labor%", "Food Cost%", "SPLH", "Transactions", "Labor Hours", "Act vs Ideal", "Act vs Sched", "Financial Loss $", "Time Loss", "Act/Proj Sales", "Act/Proj Trans", "Food Cost", "SPLH", "Actual Sales", "Actual OT%", "Active Team", "Hired", "Pending", "Retention", "Compliance", "Early Clock IN", "Late Clock Out", "OT Loss"]
+        };
+
+        function addDashboard(type) {
+            dashboards.push({ id: `D_0${dashboards.length + 1}`, name: type, friendlyName: type, status: true, sections: [] });
+            document.getElementById('addDropdown').classList.add('hidden');
+            renderTable();
+        }
+
+        function renderTable() {
+            const body = document.getElementById('dashboardTableBody');
+            const empty = document.getElementById('emptyState');
+            if (dashboards.length > 0) empty.classList.add('hidden');
+            body.innerHTML = dashboards.map((db, i) => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-4 font-mono text-sm text-slate-400 font-medium">${db.id}</td>
+                    <td class="p-4 font-bold text-slate-700">${db.name}</td>
+                    <td class="p-4"><input type="text" value="${db.friendlyName}" onchange="dashboards[${i}].friendlyName=this.value" class="w-full px-3 py-1.5 rounded-md bg-slate-50 border border-slate-200"></td>
+                    <td class="p-4 text-center"><span class="status-pill ${db.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${db.status ? 'Active' : 'Inactive'}</span></td>
+                    <td class="p-4 flex justify-center"><button onclick="editDashboard(${i})" class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 text-white shadow-md"><i data-lucide="pencil" class="w-4 h-4"></i></button></td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function editDashboard(index) {
+            currentEditingIndex = index;
+            const db = dashboards[index];
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('editView').classList.remove('hidden');
+            document.getElementById('editingTitle').innerText = `Editing: ${db.name}`;
+            document.getElementById('editDashboardName').value = db.name;
+            updateToggleUI(db.status);
+            renderSections();
+            switchTab('general');
+        }
+
+        function showListView() {
+            document.getElementById('listView').classList.remove('hidden');
+            document.getElementById('editView').classList.add('hidden');
+            renderTable();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function toggleStatusEdit() {
+            dashboards[currentEditingIndex].status = !dashboards[currentEditingIndex].status;
+            updateToggleUI(dashboards[currentEditingIndex].status);
+        }
+
+        function updateToggleUI(isActive) {
+            const toggle = document.getElementById('statusToggle');
+            const dot = document.getElementById('toggleDot');
+            const label = document.getElementById('statusLabel');
+            if (isActive) {
+                toggle.className = "w-14 h-7 bg-green-500 rounded-full relative transition-all duration-300 shadow-inner";
+                dot.style.right = '4px'; dot.style.left = 'auto';
+                label.innerText = 'ACTIVE'; label.className = 'text-sm font-bold text-green-600';
+            } else {
+                toggle.className = "w-14 h-7 bg-red-500 rounded-full relative transition-all duration-300 shadow-inner";
+                dot.style.left = '4px'; dot.style.right = 'auto';
+                label.innerText = 'INACTIVE'; label.className = 'text-sm font-bold text-red-600';
+            }
+        }
+
+        function addNewSection() {
+            const colCount = parseInt(document.getElementById('colSelect').value);
+            globalSectionCounter++;
+            dashboards[currentEditingIndex].sections.push({
+                id: `S_${globalSectionCounter}`, type: colCount, order: dashboards[currentEditingIndex].sections.length + 1, components: Array(colCount).fill('')
+            });
+            renderSections();
+        }
+
+        function renderSections() {
+            const container = document.getElementById('sectionTableBody');
+            const sections = dashboards[currentEditingIndex].sections;
+            container.innerHTML = sections.map((sec, sIdx) => `
+                <tr class="align-top hover:bg-slate-50/30">
+                    <td class="p-4 text-center font-mono text-xs text-slate-400 font-bold">${sec.id}</td>
+                    <td class="p-4 text-center"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${sec.type} Column</span></td>
+                    <td class="p-4 text-center"><input type="number" value="${sec.order}" onchange="dashboards[${currentEditingIndex}].sections[${sIdx}].order=this.value" class="w-16 text-center border rounded p-1 text-sm font-bold border-slate-200"></td>
+                    <td class="p-4">
+                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                            ${sec.components.map((c, cIdx) => `
+                                <div class="flex items-center gap-1 bg-white border border-slate-100 p-1.5 rounded-xl shadow-sm">
+                                    <span class="flex-1 text-[11px] font-bold uppercase tracking-tight truncate px-1 ${c ? 'text-slate-800' : 'text-slate-300'}">${c || 'Slot Empty'}</span>
+                                    <div class="flex gap-1">
+                                        <button onclick="openSelector(${sIdx}, ${cIdx})" class="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i data-lucide="plus-circle" class="w-8 h-8"></i></button>
+                                        ${c ? `<button onclick="clearSlot(${sIdx}, ${cIdx})" class="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </td>
+                    <td class="p-4 text-center"><button onclick="deleteSection(${sIdx})" class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function deleteSection(sIdx) { if(confirm('Delete section?')) { dashboards[currentEditingIndex].sections.splice(sIdx, 1); renderSections(); } }
+        function clearSlot(sIdx, cIdx) { dashboards[currentEditingIndex].sections[sIdx].components[cIdx] = ''; renderSections(); }
+
+        function openSelector(sIdx, cIdx) {
+            activeSelectionContext = { sIdx, cIdx };
+            const type = dashboards[currentEditingIndex].sections[sIdx].type.toString();
+            const options = globalComponents[type] || [];
+            const list = document.getElementById('modalOptionsList');
+            
+            list.innerHTML = options.map(opt => {
+                let icon = "activity", color = "bg-sky-100 text-sky-600";
+                const lower = opt.toLowerCase();
+
+                if(lower.includes("labor") || lower.includes("time") || lower.includes("hour")) { icon = "clock"; color = "bg-blue-100 text-blue-600"; }
+                else if(lower.includes("sales") || lower.includes("trans")) { icon = "trending-up"; color = "bg-green-100 text-green-600"; }
+                else if(lower.includes("cost") || lower.includes("loss") || lower.includes("$")) { icon = "dollar-sign"; color = "bg-emerald-100 text-emerald-600"; }
+                else if(lower.includes("risk") || lower.includes("compliance") || lower.includes("exception") || lower.includes("minor")) { icon = "shield-alert"; color = "bg-red-100 text-red-600"; }
+                else if(lower.includes("inventory") || lower.includes("food")) { icon = "package"; color = "bg-orange-100 text-orange-600"; }
+                else if(lower.includes("log") || lower.includes("history") || lower.includes("summary")) { icon = "file-text"; color = "bg-purple-100 text-purple-600"; }
+
+                return `
+                    <button onclick="selectComponent('${opt}')" class="component-card group bg-white rounded-xl shadow-sm">
+                        <div class="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${color} group-hover:scale-110 transition-transform mb-3">
+                            <i data-lucide="${icon}" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-700 uppercase tracking-tighter leading-tight">${opt}</span>
+                    </button>`;
+            }).join('');
+            document.getElementById('componentModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function selectComponent(name) {
+            const { sIdx, cIdx } = activeSelectionContext;
+            dashboards[currentEditingIndex].sections[sIdx].components[cIdx] = name;
+            closeModal(); renderSections();
+        }
+        function closeModal() { document.getElementById('componentModal').classList.add('hidden'); }
+        function saveAll() { alert('Saved!'); showListView(); }
+    </script>
+</body>
+</html>
