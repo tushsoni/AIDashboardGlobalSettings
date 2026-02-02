@@ -360,8 +360,8 @@
                                 <div class="flex items-center gap-1 bg-white border border-slate-100 p-1.5 rounded-xl shadow-sm">
                                     <span class="flex-1 text-[11px] font-bold uppercase tracking-tight truncate px-1 ${c ? 'text-slate-800' : 'text-slate-300'}">${c || 'Slot Empty'}</span>
                                     <div class="flex gap-1 items-center">
-                                        <button onclick="openSelector(${sIdx}, ${cIdx})" class="w-9 h-9 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i data-lucide="plus-circle" class="w-7 h-7"></i></button>
-                                        ${c ? `<button onclick="clearSlot(${sIdx}, ${cIdx})" class="w-9 h-9 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                                        <button onclick="openSelector(${sIdx}, ${cIdx})" class="w-9 h-9 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i data-lucide="plus-circle" class="w-5 h-5"></i></button>
+                                        ${c ? `<button onclick="clearSlot(${sIdx}, ${cIdx})" class="w-9 h-9 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></button>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
