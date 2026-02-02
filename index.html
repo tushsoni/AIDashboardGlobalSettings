@@ -38,6 +38,7 @@
             justify-content: center;
             padding: 14px 8px;
             text-align: center;
+            min-height: 100px;
         }
         .component-card:hover {
             border-color: #3b82f6;
@@ -198,17 +199,35 @@
                             </table>
                         </div>
                     </div>
+
                     <div id="content-apps" class="tab-pane hidden">
-                        <div class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 w-fit">
-                            <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                            <span class="font-medium text-slate-700">Forecast</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <label class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Forecast</span>
+                            </label>
+                            <label class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Inventory</span>
+                            </label>
+                            <label class="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                <span class="font-medium text-slate-700">Payroll</span>
+                            </label>
                         </div>
                     </div>
+
                     <div id="content-roles" class="tab-pane hidden">
-                        <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors max-w-sm">
-                            <span class="font-semibold text-slate-700">Assistant Manager</span>
-                            <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
-                        </label>
+                        <div class="space-y-3 max-w-md">
+                            <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors">
+                                <span class="font-semibold text-slate-700">Manager</span>
+                                <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                            </label>
+                            <label class="flex justify-between items-center p-4 border rounded-xl hover:border-blue-300 transition-colors">
+                                <span class="font-semibold text-slate-700">Assistant Manager</span>
+                                <input type="checkbox" class="w-6 h-6 border-slate-300 text-blue-600 rounded">
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -289,9 +308,13 @@
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-            document.getElementById('content-' + tabId).classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            const targetPane = document.getElementById('content-' + tabId);
+            const targetBtn = document.getElementById('tab-' + tabId);
+            
+            if (targetPane) targetPane.classList.remove('hidden');
+            if (targetBtn) targetBtn.classList.add('active');
         }
 
         function toggleStatusEdit() {
@@ -332,19 +355,19 @@
                     <td class="p-4 text-center"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${sec.type} Column</span></td>
                     <td class="p-4 text-center"><input type="number" value="${sec.order}" onchange="dashboards[${currentEditingIndex}].sections[${sIdx}].order=this.value" class="w-16 text-center border rounded p-1 text-sm font-bold border-slate-200"></td>
                     <td class="p-4">
-                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
                             ${sec.components.map((c, cIdx) => `
                                 <div class="flex items-center gap-1 bg-white border border-slate-100 p-1.5 rounded-xl shadow-sm">
                                     <span class="flex-1 text-[11px] font-bold uppercase tracking-tight truncate px-1 ${c ? 'text-slate-800' : 'text-slate-300'}">${c || 'Slot Empty'}</span>
-                                    <div class="flex gap-1">
-                                        <button onclick="openSelector(${sIdx}, ${cIdx})" class="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i data-lucide="plus-circle" class="w-8 h-8"></i></button>
-                                        ${c ? `<button onclick="clearSlot(${sIdx}, ${cIdx})" class="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                                    <div class="flex gap-1 items-center">
+                                        <button onclick="openSelector(${sIdx}, ${cIdx})" class="w-9 h-9 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i data-lucide="plus-circle" class="w-7 h-7"></i></button>
+                                        ${c ? `<button onclick="clearSlot(${sIdx}, ${cIdx})" class="w-9 h-9 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </td>
-                    <td class="p-4 text-center"><button onclick="deleteSection(${sIdx})" class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                    <td class="p-4 text-center"><button onclick="deleteSection(${sIdx})" class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm mx-auto"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                 </tr>
             `).join('');
             lucide.createIcons();
