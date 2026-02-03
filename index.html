@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Global Settings AI Dashboard</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script src="https://unpkg.com/lucide@latest"></script>
+      <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+      <style>
+         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+         .sidebar-active { background-color: rgba(255,255,255,0.1); border-left: 4px solid #f97316; }
+         .tab-btn { transition: all 0.2s ease; border: 1px solid #3b82f6; color: #3b82f6; }
+         .tab-btn.active { background-color: #3b82f6; color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
+         .card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+         .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+         .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+         .custom-scroll::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 10px; }
+         .comp-preview-card { background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); overflow: hidden; display: flex; flex-direction: column; height: 100%; border: 1px solid #e2e8f0; }
+         .comp-header-line { height: 5px; width: 100%; }
+         .value-huge { font-size: 1.8rem; font-weight: 900; color: #0f172a; letter-spacing: -0.05em; line-height: 1.1; }
+         .label-caps { font-size: 11px; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 0.05em; }
+         .comparison-label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+         .status-pill-small { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+         .ai-index-bar { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%); position: relative; width: 100%; }
+         .ai-indicator { position: absolute; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; background: white; border-radius: 50%; border: 2px solid #0f111a; box-shadow: 0 0 8px white; }
+         /* Update your existing drag-handle style */
+         .drag-handle { 
+         cursor: grab; 
+         user-select: none; /* Prevents text selection while dragging */
+         }
+         .drag-handle:active { 
+         cursor: grabbing; 
+         }
+         .sortable-ghost { opacity: 0.3; background: #dbeafe !important; }
+         /* 8-Column Scroller */
+         .scroller-container { display: flex; overflow-x: auto; gap: 1.5rem; padding-bottom: 0.75rem; }
+         .scroller-item { flex: 0 0 calc(20% - 1.2rem); min-width: 180px; }
+         /* Preview Animations */
+         .preview-tile { background: #dbeafe; border-radius: 4px; transition: all 0.3s ease; }
+         .group:hover .preview-tile { background: #3b82f6; }
+         /* ===== PREVIEW: 8 COLUMN LIMITED TO 5 PER ROW ===== */
+         /* WRAP MODE → 5 per row, rest go down */
+         .preview-wrap-5 {
+         display: grid;
+         grid-template-columns: repeat(5, minmax(0, 1fr));
+         gap: 1.5rem;
+         }
+         /* SCROLLER MODE → 5 visible, scroll rest */
+         .preview-scroller-5 {
+         display: flex;
+         gap: 1.5rem;
+         overflow-x: auto;
+         }
+         /* EXACT 5 tiles visible (gap-aware) */
+         .preview-scroller-5 {
+         display: flex;
+         gap: 1.5rem;
+         overflow-x: auto;
+         }
+         .preview-scroller-5 > .preview-tile {
+         flex: 0 0 calc((100% - (4 * 1.5rem)) / 5);
+         min-width: 180px;
+         }
+      </style>
+   </head>
+   <body class="text-slate-900">
+      <header class="bg-[#1e293b] text-white h-14 flex items-center justify-between px-4 fixed w-full z-20">
+         <div class="flex items-center gap-4">
+            <div class="bg-orange-500 p-1.5 rounded-md"><i data-lucide="layout-grid" class="w-5 h-5"></i></div>
+            <span class="font-medium">My Apps</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 opacity-70"></i>
+         </div>
+         <div class="flex-1 max-w-2xl px-8">
+            <div class="relative">
+               <input type="text" placeholder="Type to search" class="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg py-1.5 px-4 pr-10 focus:bg-white focus:text-slate-900 transition-all outline-none">
+               <i data-lucide="search" class="absolute right-3 top-2 text-slate-400 w-4 h-4"></i>
+            </div>
+         </div>
+         <div class="flex items-center gap-4 text-sm">
+            <div class="flex items-center gap-2 border border-slate-700 rounded-md px-3 py-1 bg-slate-800/50">
+               <i data-lucide="store" class="w-4 h-4"></i>
+               <span>Corporate</span>
+               <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            </div>
+            <i data-lucide="settings" class="w-5 h-5 text-slate-400 cursor-pointer hover:text-white"></i>
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-xs ring-2 ring-slate-700">US</div>
+         </div>
+      </header>
+      <div class="flex pt-14 h-screen">
+         <aside class="w-16 bg-[#1e293b] flex flex-col items-center py-6 gap-8 text-white fixed h-full border-r border-slate-800">
+            <i data-lucide="home" class="w-5 h-5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"></i>
+            <div class="w-full flex justify-center py-3 sidebar-active">
+               <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            </div>
+            <i data-lucide="file-text" class="w-5 h-5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"></i>
+         </aside>
+         <main class="ml-16 flex-1 p-8 overflow-y-auto">
+            <div id="listView">
+               <div class="flex justify-between items-center mb-8">
+                  <div>
+                     <h1 class="text-2xl font-bold tracking-tight text-slate-800">Dashboards</h1>
+                     <p class="text-slate-500 text-sm">Manage and configure your AI Dashboard Setting</p>
+                  </div>
+                  <button onclick="addNewDashboardFlow()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold transition-all shadow-lg shadow-blue-500/20">
+                  <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Dashboard
+                  </button>
+               </div>
+               <div class="card overflow-hidden">
+                  <table class="w-full text-left border-collapse">
+                     <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                           <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
+                           <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Dashboard</th>
+                           <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Friendly Name</th>
+                           <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                           <th class="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                        </tr>
+                     </thead>
+                     <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
+                  </table>
+                  <div id="emptyState" class="p-20 text-center">
+                     <i data-lucide="layers" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
+                     <p class="text-slate-400 font-medium">No dashboards found.</p>
+                  </div>
+               </div>
+            </div>
+            <div id="editView" class="hidden">
+               <div class="flex justify-between items-center mb-6">
+                  <div>
+                     <button onclick="showListView()" 
+                        class="group text-blue-600 flex items-center gap-2 mb-2 text-sm font-semibold hover:underline">
+                     <i data-lucide="arrow-left" 
+                        class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i>
+                     Back to list
+                     </button>
+                     <h2 class="text-2xl font-bold text-slate-800" id="editingTitle">
+                        New Dashboard
+                     </h2>
+                  </div>
+                  <!-- RIGHT ACTIONS -->
+                  <div class="flex items-center gap-3">
+                     <!-- PREVIEW BUTTON -->
+                     <!-- SAVE BUTTON (unchanged) -->
+                     <button onclick="saveAll()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                     <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                     Save Changes
+                     </button>
+                  </div>
+               </div>
+               <div class="flex gap-4 mb-8 bg-white p-2 rounded-2xl border border-slate-200 inline-flex">
+                  <button onclick="switchTab('general')" id="tab-general" class="tab-btn active px-6 py-2 rounded-xl text-sm font-bold">General Settings</button>
+                  <button onclick="switchTab('sections')" id="tab-sections" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Sections</button>
+                  <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Applications</button>
+                  <button onclick="switchTab('roles')" id="tab-roles" class="tab-btn px-6 py-2 rounded-xl text-sm font-bold">Roles</button>
+               </div>
+               <div class="card min-h-[650px] flex flex-col overflow-hidden bg-white">
+                  <div id="content-general" class="tab-pane p-8 h-full">
+                     <div class="max-w-xl space-y-8">
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                           <div>
+                              <label class="block font-bold text-slate-700">Dashboard Status</label>
+                              <p class="text-xs text-slate-500">Toggle visibility of this dashboard.</p>
+                           </div>
+                           <div class="flex items-center gap-4">
+                              <span id="statusLabel" class="text-sm font-bold text-green-600 uppercase">Active</span>
+                              <button onclick="toggleStatusEdit()" id="statusToggle" class="w-14 h-7 bg-green-500 rounded-full relative transition-all duration-300 shadow-inner">
+                                 <div id="toggleDot" class="absolute right-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div>
+                              </button>
+                           </div>
+                        </div>
+                        <div>
+                           <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Dashboard Name</label>
+                           <input type="text" id="editDashboardName" oninput="syncDashboardNames(this.value)" placeholder="e.g. Operational Summary" class="w-full p-3 border border-slate-200 bg-white rounded-lg text-slate-800 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                     </div>
+                  </div>
+                  <div id="content-sections" class="tab-pane hidden flex-1 flex overflow-hidden">
+                     <div class="w-72 bg-white border-r border-slate-200 p-6 overflow-y-auto custom-scroll">
+                        <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">Select Layout</h3>
+                        <div class="space-y-4">
+                           <div onclick="addNewSection(1)" class="cursor-pointer border-2 border-transparent hover:border-blue-500 p-3 rounded-lg bg-slate-50">
+                              <div class="grid grid-cols-1 gap-1 mb-2">
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                              </div>
+                              <span class="text-[11px] font-bold text-slate-600 uppercase">1 Column (Headers)</span>
+                           </div>
+                           <div onclick="addNewSection(2)" class="cursor-pointer border-2 border-transparent hover:border-blue-500 p-3 rounded-lg bg-slate-50">
+                              <div class="grid grid-cols-2 gap-1 mb-2">
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                              </div>
+                              <span class="text-[11px] font-bold text-slate-600 uppercase">2 Columns (Charts/Grids)</span>
+                           </div>
+                           <div onclick="addNewSection(3)" class="cursor-pointer border-2 border-transparent hover:border-blue-500 p-3 rounded-lg bg-slate-50">
+                              <div class="grid grid-cols-3 gap-1 mb-2">
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                              </div>
+                              <span class="text-[11px] font-bold text-slate-600 uppercase">3 Columns (KPIs)</span>
+                           </div>
+                           <div onclick="addNewSection(5)" class="cursor-pointer border-2 border-transparent hover:border-blue-500 p-3 rounded-lg bg-slate-50">
+                              <div class="grid grid-cols-5 gap-0.5 mb-2">
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                                 <div class="h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded w-full"></div>
+                              </div>
+                              <span class="text-[11px] font-bold text-slate-600 uppercase">5 Columns (Mini KPIs)</span>
+                           </div>
+                           <div onclick="openEightColConfig()" class="cursor-pointer border-2 border-transparent hover:border-blue-500 p-3 rounded-lg bg-slate-50 group">
+                              <div class="grid grid-cols-8 gap-0.5 mb-2">
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                                 <div class="h-4 bg-orange-400 group-hover:bg-blue-500 rounded transition-colors"></div>
+                              </div>
+                              <span class="text-[11px] font-bold text-slate-600 uppercase">8 Columns (Scroller/Wrap)</span>
+                           </div>
+                        </div>
+                     </div>
+ <div class="flex-1 bg-[#f8fafc] overflow-hidden flex flex-col">
+
+   <!-- Sections Header -->
+   <div class="flex justify-between items-center px-8 py-4 border-b bg-white">
+      <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest">
+         Dashboard Layout
+      </h3>
+
+      <button onclick="openPreview()"
+         class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2">
+         <i data-lucide="eye" class="w-4 h-4"></i>
+         Preview
+      </button>
+   </div>
+
+   <!-- Sections Canvas -->
+   <div id="sectionCanvas" class="flex-1 p-8 overflow-y-auto custom-scroll">
+      <div id="sectionEmptyState" class="h-full flex flex-col items-center justify-center text-slate-400">
+         ...
+      </div>
+
+      <div id="sectionListContainer" class="space-y-12"></div>
+   </div>
+</div>
+
+                  </div>
+                  <div id="content-apps" class="tab-pane hidden p-8 h-full">
+                     <div class="flex items-center justify-between mb-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex gap-8">
+                           <button onclick="toggleAll('content-apps', true)" class="text-[11px] font-black text-blue-600 uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Select All</button>
+                           <button onclick="toggleAll('content-apps', false)" class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Deselect All</button>
+                        </div>
+                        <div class="relative">
+                           <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
+                           <input type="text" onkeyup="filterItems('content-apps', this.value)" placeholder="Search applications..." class="pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 min-w-[300px]">
+                        </div>
+                     </div>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="apps-grid">
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="bar-chart-3" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Forecast</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="package" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Inventory</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="shopping-cart" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Ordering</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="check-square" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Checklist</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="clock" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Clock</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="calendar" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Schedule</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                     </div>
+                  </div>
+                  <div id="content-roles" class="tab-pane hidden p-8 h-full">
+                     <div class="flex items-center justify-between mb-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex gap-8">
+                           <button onclick="toggleAll('content-roles', true)" class="text-[11px] font-black text-blue-600 uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Select All</button>
+                           <button onclick="toggleAll('content-roles', false)" class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Deselect All</button>
+                        </div>
+                        <div class="relative">
+                           <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
+                           <input type="text" onkeyup="filterItems('content-roles', this.value)" placeholder="Search roles..." class="pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 min-w-[300px]">
+                        </div>
+                     </div>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="roles-grid">
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="user-cog" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Assistant Manager</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="user-check" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Manager</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="users" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Shift Manager</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="user" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Shift Lead</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="group p-5 border border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer flex items-center justify-between bg-white shadow-sm">
+                           <div class="flex items-center gap-4">
+                              <div class="p-2.5 bg-slate-100 rounded-xl group-hover:bg-blue-100 transition-colors"><i data-lucide="user-minus" class="w-5 h-5 text-slate-500 group-hover:text-blue-600"></i></div>
+                              <span class="font-extrabold text-slate-700 tracking-tight">Cashier</span>
+                           </div>
+                           <input type="checkbox" checked class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </label>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </main>
+      </div>
+      <div id="eightColModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeEightColModal()"></div>
+         <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl p-8 border border-slate-100">
+            <div class="flex items-center gap-3 mb-2">
+               <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                  <i data-lucide="layout" class="w-5 h-5"></i>
+               </div>
+               <h3 class="text-xl font-black text-slate-900">Configure 8-Column Layout</h3>
+            </div>
+            <p class="text-slate-500 text-sm mb-8">How should the tiles behave when they exceed the row width?</p>
+            <div class="grid grid-cols-2 gap-6 mb-10">
+               <button onclick="setEightColSelection('scroller')" id="btn-scroller" class="eight-col-option group relative bg-white border border-slate-200 p-6 rounded-2xl text-left transition-all">
+                  <div class="flex justify-between items-start mb-6">
+                     <span class="text-sm font-black text-slate-800 uppercase tracking-wider">SCROLLER</span>
+                     <div class="radio-dot w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center">
+                        <div class="dot w-2 h-2 rounded-full bg-blue-500 hidden"></div>
+                     </div>
+                  </div>
+                  <div class="h-24 bg-slate-50 rounded-xl p-4 flex flex-col justify-center">
+                     <div class="flex gap-1.5 w-full overflow-hidden mb-3">
+                        <div class="h-8 w-8 bg-blue-100 rounded-sm flex-shrink-0"></div>
+                        <div class="h-8 w-8 bg-blue-100 rounded-sm flex-shrink-0"></div>
+                        <div class="h-8 w-8 bg-blue-100 rounded-sm flex-shrink-0"></div>
+                        <div class="h-8 w-8 bg-blue-100 rounded-sm flex-shrink-0"></div>
+                        <div class="h-8 w-8 bg-blue-100 rounded-sm flex-shrink-0"></div>
+                     </div>
+                     <div class="w-full h-1.5 bg-slate-200 rounded-full relative">
+                        <div class="absolute left-0 top-0 h-full w-1/3 bg-blue-500 rounded-full"></div>
+                     </div>
+                  </div>
+               </button>
+               <button onclick="setEightColSelection('wrap')" id="btn-wrap" class="eight-col-option group relative bg-white border border-slate-200 p-6 rounded-2xl text-left transition-all">
+                  <div class="flex justify-between items-start mb-6">
+                     <span class="text-sm font-black text-slate-800 uppercase tracking-wider">WRAP</span>
+                     <div class="radio-dot w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center">
+                        <div class="dot w-2 h-2 rounded-full bg-blue-500 hidden"></div>
+                     </div>
+                  </div>
+                  <div class="h-24 bg-slate-50 rounded-xl p-3 flex flex-col gap-2 justify-center">
+                     <div class="flex gap-1.5">
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                     </div>
+                     <div class="flex gap-1.5">
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                        <div class="h-6 w-6 bg-blue-100 rounded-sm"></div>
+                     </div>
+                  </div>
+               </button>
+            </div>
+            <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
+               <button onclick="closeEightColModal()" class="px-6 py-2 text-xs font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">CANCEL</button>
+               <button onclick="confirmAddEightCol()" class="bg-[#1e293b] hover:bg-slate-800 text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-all">ADD LAYOUT</button>
+            </div>
+         </div>
+      </div>
+      <div id="componentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onclick="closeModal()"></div>
+         <div class="relative bg-[#f8fafc] w-full max-w-5xl rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] overflow-hidden border border-white">
+            <div class="px-10 py-8 border-b border-slate-200/60 bg-white/50 flex justify-between items-end">
+               <div>
+                  <h3 class="text-2xl font-black text-slate-900 tracking-tight">Select Component</h3>
+                  <p class="text-slate-500 text-sm font-medium">Choose a visual module to add to your layout</p>
+               </div>
+               <button onclick="closeModal()" class="bg-white p-2 rounded-full shadow-sm text-slate-400 hover:text-red-500 border border-slate-100 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-10 max-h-[70vh] overflow-y-auto custom-scroll">
+               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="modalOptionsList"></div>
+            </div>
+         </div>
+      </div>
+      <div id="previewModal" class="hidden fixed inset-0 z-[70] bg-slate-900/70 backdrop-blur-sm">
+         <div class="absolute inset-0" onclick="closePreview()"></div>
+         <div class="relative bg-slate-100 max-w-7xl mx-auto my-6 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[90vh]">
+            <div class="bg-white px-8 py-4 border-b flex justify-between items-center">
+               <h3 class="text-xl font-black text-slate-800">Dashboard Preview</h3>
+               <button onclick="closePreview()" class="text-slate-400 hover:text-red-500">
+               <i data-lucide="x" class="w-6 h-6"></i>
+               </button>
+            </div>
+            <div id="previewContent" class="flex-1 overflow-y-auto p-8 space-y-12 bg-[#f8fafc]">
+               <!-- Rendered dashboard goes here -->
+            </div>
+         </div>
+      </div>
+      <script>
+         lucide.createIcons();
+         let dashboards = [];
+         let currentEditingIndex = -1;
+         let activeSelectionContext = null;
+         
+         const componentsData = {
+         // --- 1 Column (Operational Summaries) ---
+         "System Compliance": { col: 1, type: 'header', icon: 'shield-check', val: "86%", sub: "EXCELLENT", badge: "bg-green-950 text-green-500 border-green-900", items: [{l: "Last Week", v: "+3.2 pts", t: "↑", c: "text-green-500"}, {l: "Last Year", v: "+7.8 pts", t: "↑", c: "text-green-500"}] },
+         "Risk Analysis Summary": { col: 1, type: 'header', icon: 'alert-triangle', val: "72%", sub: "HIGH RISK", badge: "bg-red-950 text-red-500 border-red-900", items: [{l: "Last Week", v: "+8.1 pts", t: "↑", c: "text-red-400"}, {l: "Last Year", v: "+12.4 pts", t: "↑", c: "text-red-400"}] },
+         "Store Health Summary": { col: 1, type: 'header', icon: 'activity', val: "86%", sub: "EXCELLENT", badge: "bg-green-950 text-green-500 border-green-900", items: [{l: "Last Week", v: "+3.2 pts", t: "↑", c: "text-green-500"}, {l: "Last Year", v: "+7.8 pts", t: "↑", c: "text-green-500"}] },
+         "Time Loss Summary": { col: 1, type: 'header', icon: 'clock', val: "86%", sub: "EXCELLENT", badge: "bg-green-950 text-green-500 border-green-900", items: [{l: "Last Week", v: "+3.2 pts", t: "↑", c: "text-green-500"}, {l: "Last Year", v: "+7.8 pts", t: "↑", c: "text-green-500"}] },
+         "HISTORICAL DATA LOG": { col: 1, icon: 'database', type: 'table-log' },
+         
+         // --- 2 Columns (Charts & Performance) ---
+         // --- 2 Columns (CARBON COPY PERFORMANCE TABLES) ---
+         "Labor Performance": { 
+         col: 2, type: 'table-perf', icon: 'clipboard-list', color: 'pink',
+         items: [
+             { l: "Labor% (50%)", cur: "18.2%", wtd: "17.8%", lw: "-1.4%", score: "99%" },
+             { l: "Labor $ (30%)", cur: "$2.6k", wtd: "$2.4k", lw: "-$120", score: "96%" },
+             { l: "Sales (20%)", cur: "$14k", wtd: "$12k", lw: "+$1k", score: "100%" }
+         ] 
+         },
+         "Inventory Control": { 
+         col: 2, type: 'table-perf', icon: 'shopping-cart', color: 'orange',
+         items: [
+             { l: "Food% (50%)", cur: "29.4%", wtd: "29.1%", lw: "-0.8%", score: "97%" },
+             { l: "Waste (30%)", cur: "$220", wtd: "$580", lw: "-$40", score: "90%" },
+             { l: "Theory (20%)", cur: "28.2%", wtd: "28.0%", lw: "-0.2%", score: "99%" }
+         ] 
+         },
+         "Payroll Management": { 
+         col: 2, type: 'table-perf', icon: 'clock', color: 'blue',
+         items: [
+             { l: "SPLH (60%)", cur: "42.5", wtd: "41.8", lw: "+1.2", score: "100%" },
+             { l: "Hours (40%)", cur: "320", wtd: "310", lw: "-10", score: "100%" },
+             { l: "Ideal (0%)", cur: "40.0", wtd: "40.0", lw: "0.0", score: "100%" }
+         ] 
+         },
+         "Cash Control": { 
+         col: 2, type: 'table-perf', icon: 'banknote', color: 'emerald',
+         items: [
+             { l: "Sales (70%)", cur: "$32,862", wtd: "$31k", lw: "-0.8%", score: "100%" },
+             { l: "Voids (15%)", cur: "$425", wtd: "$380", lw: "-12%", score: "94%" },
+             { l: "Short (15%)", cur: "-$125", wtd: "-$340", lw: "-$50", score: "100%" }
+         ] 
+         },
+         "Weekly Time Loss Analysis": { col: 2, icon: 'bar-chart', type: 'chart-weekly' },
+         "Time Loss Trend vs Sales": { col: 2, icon: 'trending-up', type: 'chart-trend' },
+         
+         // --- 3 Columns (CARBON COPY KPI Risk Cards) ---
+         "Labor Risk": { 
+         col: 3, type: 'kpi-risk', icon: 'users', color: 'red', val: "75%", sub: "HIGH RISK", trend: "+3.2% LW",
+         items: [
+             { l: "Unauthorized OT", v: "42 hrs", c: "bg-red-500" },
+             { l: "Missed Punches", v: "18", c: "bg-red-500" },
+             { l: "Manual Edits", v: "7.6%", c: "bg-orange-400" }
+         ],
+         footer: { l: "Clopening Exposure", v: "82%", t: "↑ 3.2%", icon: "shield-check" }
+         },
+         "Inventory Risk": { 
+         col: 3, type: 'kpi-risk', icon: 'package', color: 'orange', val: "68%", sub: "ELEVATED", trend: "+1.1% LW",
+         items: [
+             { l: "Food Cost Var", v: "+1.8%", c: "bg-orange-400" },
+             { l: "Waste Events", v: "126", c: "bg-red-500" },
+             { l: "Waste Cost", v: "$22.8K", c: "bg-red-500" }
+         ],
+         footer: { l: "Stockout Alerts", v: "09", t: "↑ 1.1%", icon: "alert-triangle" }
+         },
+         "Compliance Risk": { 
+         col: 3, type: 'kpi-risk', icon: 'shield-check', color: 'rose', val: "71%", sub: "HIGH RISK", trend: "STABLE",
+         items: [
+             { l: "Break Violations", v: "14", c: "bg-red-500" },
+             { l: "Minor Violations", v: "5", c: "bg-red-500" },
+             { l: "FWW Breaches", v: "3", c: "bg-orange-400" }
+         ],
+         footer: { l: "Unapproved Shifts", v: "11", t: "— 0%", icon: "info" }
+         },
+         "Schedule Risk": { 
+         col: 3, type: 'kpi-risk', icon: 'calendar', color: 'yellow', val: "66%", sub: "ELEVATED", trend: "-2.4% LW",
+         items: [
+             { l: "Understaffed", v: "21", c: "bg-red-500" },
+             { l: "Overstaffed", v: "17", c: "bg-orange-400" },
+             { l: "Schedule Changes", v: "46", c: "bg-orange-400" }
+         ],
+         footer: { l: "Late Publishing", v: "04", t: "↓ 2.4%", icon: "clock" }
+         },
+         "Sales Risk": { 
+         col: 3, type: 'kpi-risk', icon: 'bar-chart-3', color: 'blue', val: "61%", sub: "ELEVATED", trend: "-1.8% LW",
+         items: [
+             { l: "Sales Forecast", v: "-4.2%", c: "bg-blue-500" },
+             { l: "Transaction Drop", v: "-6.8%", c: "bg-red-500" },
+             { l: "Avg Ticket Var", v: "-2.1%", c: "bg-yellow-500" }
+         ],
+         footer: { l: "Promo Leakage", v: "$3.4K", t: "↓ 1.8%", icon: "trending-down" }
+         },
+         
+         // --- Legacy 3-Column Items ---
+         "Attendance Behaviour": { 
+         col: 3, type: 'kpi-risk', icon: 'bar-chart', color: 'blue', val: "68%", sub: "OVERALL COMP.", trend: "↓ 4.2% LW",
+         items: [
+             { l: "Early Clock In", v: "15%", t: "↑ 2%", c: "bg-emerald-500", tc: "text-emerald-500" },
+             { l: "Late Clock Out", v: "8%", t: "↑ 2%", c: "bg-orange-500", tc: "text-red-500" },
+             { l: "Dropped Shifts", v: "4%", t: "↓ 1%", c: "bg-red-500", tc: "text-emerald-500" }
+         ],
+         footer: { l: "UnApproved Shifts", v: "4%", t: "↑ 2%", icon: "shield-alert" }
+         },
+         "Minors Compliance": { 
+         col: 3, type: 'kpi-risk', icon: 'bar-chart', color: 'orange', val: "68%", sub: "OVERALL COMP.", trend: "↓ 3.1% LW",
+         items: [
+             { l: "Hours Violations", v: "4 incidents", t: "↓ 2", c: "bg-red-500", tc: "text-emerald-500" },
+             { l: "Late-Night Work", v: "1 incident", t: "↑ 1", c: "bg-orange-500", tc: "text-red-500" },
+             { l: "Missing Permits", v: "2 minors", t: "No change", c: "bg-orange-300", tc: "text-slate-400" }
+         ],
+         footer: { l: "Minor Break Comp.", v: "96%", t: "↑ 2%", icon: "check-circle" }
+         },
+         "Breaks Management": { 
+         col: 3, type: 'kpi-risk', icon: 'bar-chart', color: 'emerald', val: "94%", sub: "OVERALL COMP.", trend: "↑ 1.4% LW",
+         items: [
+             { l: "Missed Break Rate", v: "3.1%", t: "↓ 0.8%", c: "bg-emerald-500", tc: "text-emerald-500" },
+             { l: "Late Break Violations", v: "6 incidents", t: "↓ 2", c: "bg-orange-500", tc: "text-emerald-500" },
+             { l: "Unpaid Accuracy %", v: "97%", t: "↑ 1%", c: "bg-blue-500", tc: "text-emerald-500" }
+         ],
+         footer: { l: "Violation Rate", v: "2.4", t: "↓ 0.6", icon: "activity" }
+         },
+         "Labor Exceptions": { 
+         col: 3, type: 'kpi-risk', icon: 'bar-chart', color: 'red', val: "55%", sub: "OVERALL COMP.", trend: "↑ 2.8% LW",
+         items: [
+             { l: "Missed Punches", v: "18 incidents", t: "↓ 6", c: "bg-slate-400", tc: "text-emerald-500" },
+             { l: "Unauthorized OT", v: "42 hrs", t: "↑ 8", c: "bg-slate-400", tc: "text-red-500" },
+             { l: "Manual Time Edits", v: "7.6%", t: "↓ 1.4%", c: "bg-slate-400", tc: "text-emerald-500" }
+         ],
+         footer: { l: "Unscheduled Labor", v: "31 hrs", t: "↓ 9", icon: "" }
+         },
+         "Scheduling Optimization": { 
+         col: 3, type: 'kpi-risk', icon: 'sparkles', color: 'teal', val: "88%", sub: "AI ACCURACY", trend: "↑ 2.4% LW",
+         items: [
+             { l: "Over-Staffing Cost", v: "$1,422", t: "", c: "bg-slate-400", tc: "text-red-600" },
+             { l: "Labor Gap Risk", v: "Medium", t: "", c: "bg-slate-400", tc: "text-orange-500" },
+             { l: "Schedule Reliability", v: "92%", t: "", c: "bg-slate-400", tc: "text-slate-900" }
+         ],
+         footer: { type: 'ai-button', l: "AI RECOMMENDATION: ADJUST SHIFT START" }
+         },
+         // --- 5 & 8 Columns (Mini Tiles) ---
+         "Net Sales": { col: 5, col_alt: 8, type: 'mini', icon: 'dollar-sign', val: "$14,285", sub: "WTD ($92,440)", header: "bg-blue-600", items: [{l: "Today", v: "+6.2%", c: "text-green-500"}] },
+         "Labor%": { col: 5, col_alt: 8, type: 'mini', icon: 'percent', val: "18.2%", sub: "WTD (17.8%)", header: "bg-emerald-500", items: [{l: "Today", v: "-1.4%", c: "text-red-500"}] },
+         "Food Cost%": { col: 5, col_alt: 8, type: 'mini', icon: 'pie-chart', val: "31.4%", sub: "WTD (30.8%)", header: "bg-red-500", items: [{l: "Today", v: "+2.1%", c: "text-green-500"}] },
+         "SPLH": { col: 5, col_alt: 8, type: 'mini', icon: 'zap', val: "$118.40", sub: "WTD ($122.10)", header: "bg-blue-600", items: [{l: "Today", v: "+3.4%", c: "text-green-500"}] },
+         "Transactions": { col: 5, col_alt: 8, type: 'mini', icon: 'shopping-cart', val: "1,042", sub: "WTD (6,840)", header: "bg-blue-500", items: [{l: "Today", v: "+4.2%", c: "text-green-500"}] },
+         "Labor Hours": { col: 5, col_alt: 8, type: 'mini', icon: 'clock', val: "120.6", sub: "WTD (792.4)", header: "bg-blue-600", items: [{l: "Today", v: "-0.5%", c: "text-red-500"}] },
+         "Act vs Ideal": { col: 5, col_alt: 8, type: 'mini', icon: 'crosshair', val: "+5.2", sub: "WTD (+28.4)", header: "bg-red-500", items: [{l: "Today", v: "+1.2%", c: "text-green-500"}] },
+         "Act vs Sched": { col: 5, col_alt: 8, type: 'mini', icon: 'list-checks', val: "-1.4", sub: "WTD (+12.6)", header: "bg-emerald-500", items: [{l: "Today", v: "-0.4%", c: "text-red-500"}] },
+         "Financial Loss $": { col: 5, col_alt: 8, type: 'mini', icon: 'trending-down', val: "$186.40", sub: "WTD ($1,242)", header: "bg-red-500", items: [{l: "Today", v: "+12%", c: "text-red-500"}] },
+         "Time Loss": { col: 5, col_alt: 8, type: 'mini', icon: 'watch', val: "6.4h", sub: "WTD (42.8h)", header: "bg-red-500", items: [{l: "Today", v: "+5%", c: "text-red-500"}] },
+         "Act/Proj Sales": { col: 5, col_alt: 8, type: 'mini', icon: 'bar-chart-3', val: "-$315", sub: "WTD (+$2,480)", header: "bg-red-500", items: [{l: "Today", v: "-2%", c: "text-red-500"}] },
+         "Act/Proj Trans": { col: 5, col_alt: 8, type: 'mini', icon: 'arrow-up-right', val: "+18", sub: "WTD (+114)", header: "bg-emerald-500", items: [{l: "Today", v: "+1.8%", c: "text-green-500"}] },
+         "Food Cost": { col: 5, col_alt: 8, type: 'mini', icon: 'utensils', val: "29.4%", sub: "WTD (29.1%)", header: "bg-orange-500", items: [{l: "Today", v: "-0.8%", c: "text-red-500"}] },
+         "Actual Sales": { col: 5, col_alt: 8, type: 'mini', icon: 'wallet', val: "$32,862", sub: "WTD (-2.1%)", header: "bg-blue-600", items: [{l: "Today", v: "-0.8%", c: "text-red-500"}] },
+         "Actual OT%": { col: 5, col_alt: 8, type: 'mini', icon: 'timer', val: "3.2%", sub: "WTD (3.6%)", header: "bg-blue-500", items: [{l: "Today", v: "-0.9%", c: "text-red-500"}] },
+         "Active Team": { col: 5, col_alt: 8, type: 'work-tile', val: "48", icon: "users" },
+         "Hired": { col: 5, col_alt: 8, type: 'work-tile', val: "4", icon: "user-plus" },
+         "Pending": { col: 5, col_alt: 8, type: 'work-tile', val: "2", icon: "clock" },
+         "Retention": { col: 5, col_alt: 8, type: 'work-tile', val: "96%", icon: "trending-up" },
+         "Compliance": { col: 5, col_alt: 8, type: 'work-tile', val: "98%", icon: "shield-check" },
+         "Early Clock IN": { col: 5, col_alt: 8, type: 'mini', icon: 'log-in', val: "$36.61", sub: "WTD (+1.2%)", header: "bg-orange-500", items: [{l: "Today", v: "+2.0%", c: "text-green-500"}] },
+         "Late Clock Out": { col: 5, col_alt: 8, type: 'mini', icon: 'log-out', val: "$267.04", sub: "WTD (-4.0%)", header: "bg-orange-500", items: [{l: "Today", v: "-3.2%", c: "text-red-500"}] },
+         "OT Loss": { col: 5, col_alt: 8, type: 'mini', icon: 'frown', val: "$23.50", sub: "WTD (-1.2%)", header: "bg-teal-500", items: [{l: "Today", v: "-1.0%", c: "text-red-500"}] }
+         };
+         
+         let selectedEightColType = 'scroller';
+         
+         function setEightColSelection(type) {
+         selectedEightColType = type;
+         // Reset all options
+         document.querySelectorAll('.eight-col-option').forEach(el => {
+         el.classList.replace('border-blue-500', 'border-slate-200');
+         el.classList.remove('bg-blue-50/30');
+         el.querySelector('.dot').classList.add('hidden');
+         el.querySelector('.radio-dot').classList.replace('border-blue-500', 'border-slate-200');
+         });
+         // Highlight selected
+         const activeBtn = document.getElementById(`btn-${type}`);
+         activeBtn.classList.replace('border-slate-200', 'border-blue-500');
+         activeBtn.classList.add('bg-blue-50/30');
+         activeBtn.querySelector('.dot').classList.remove('hidden');
+         activeBtn.querySelector('.radio-dot').classList.replace('border-slate-200', 'border-blue-500');
+         }
+         
+         function confirmAddEightCol() {
+         addNewSection(8, selectedEightColType);
+         closeEightColModal();
+         }
+         
+         // Update the trigger function
+         function openEightColConfig() { 
+         document.getElementById('eightColModal').classList.remove('hidden'); 
+         setEightColSelection('scroller'); // Default to scroller on open
+         lucide.createIcons();
+         }
+         
+         // Function to Select/Deselect All
+         function toggleAll(containerId, isChecked) {
+         const container = document.getElementById(containerId);
+         const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+         checkboxes.forEach(cb => cb.checked = isChecked);
+         }
+         
+         // Function to Search/Filter items
+         function filterItems(containerId, query) {
+         const container = document.getElementById(containerId);
+         const labels = container.querySelectorAll('label');
+         const searchTerm = query.toLowerCase();
+         
+         labels.forEach(label => {
+         const text = label.innerText.toLowerCase();
+         if (text.includes(searchTerm)) {
+             label.style.display = 'flex'; // Keep flex layout
+         } else {
+             label.style.display = 'none';
+         }
+         });
+         }
+         
+         function addNewDashboardFlow() {
+             dashboards.push({ id: `D_0${dashboards.length + 1}`, name: '', friendlyName: '', status: true, sections: [] });
+             currentEditingIndex = dashboards.length - 1;
+             document.getElementById('listView').classList.add('hidden');
+             document.getElementById('editView').classList.remove('hidden');
+             syncDashboardNames(""); updateToggleUI(true); renderSections(); switchTab('general');
+         }
+         
+         function syncDashboardNames(val) {
+             dashboards[currentEditingIndex].name = val;
+             dashboards[currentEditingIndex].friendlyName = val;
+             document.getElementById('editingTitle').innerText = val ? val : "Create New Dashboard";
+         }
+         
+         function renderTable() {
+             const body = document.getElementById('dashboardTableBody');
+             const empty = document.getElementById('emptyState');
+             if (dashboards.length > 0) empty.classList.add('hidden');
+             else empty.classList.remove('hidden');
+             body.innerHTML = dashboards.map((db, i) => `
+                 <tr class="hover:bg-slate-50/50">
+                     <td class="p-4 font-mono text-xs text-slate-400 font-bold">${db.id}</td>
+                     <td class="p-4 font-bold text-slate-700">${db.name || 'Draft Dashboard'}</td>
+                     <td class="p-4 font-medium text-slate-400">${db.friendlyName || '—'}</td>
+                     <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-bold ${db.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${db.status ? 'Active' : 'Inactive'}</span></td>
+                     <td class="p-4 flex justify-center"><button onclick="editExistingDashboard(${i})" class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></td>
+                 </tr>
+             `).join('');
+             lucide.createIcons();
+         }
+         
+         function editExistingDashboard(idx) {
+             currentEditingIndex = idx;
+             const db = dashboards[idx];
+             document.getElementById('listView').classList.add('hidden');
+             document.getElementById('editView').classList.remove('hidden');
+             document.getElementById('editDashboardName').value = db.name;
+             syncDashboardNames(db.name); updateToggleUI(db.status); renderSections(); switchTab('general');
+         }
+         
+         function switchTab(id) {
+             document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+             document.getElementById('content-' + id).classList.remove('hidden');
+             document.getElementById('tab-' + id).classList.add('active');
+         }
+         
+         function toggleStatusEdit() { 
+             dashboards[currentEditingIndex].status = !dashboards[currentEditingIndex].status; 
+             updateToggleUI(dashboards[currentEditingIndex].status); 
+         }
+         
+         function updateToggleUI(isActive) {
+             const toggle = document.getElementById('statusToggle');
+             const dot = document.getElementById('toggleDot');
+             const label = document.getElementById('statusLabel');
+             if (isActive) {
+                 toggle.className = "w-14 h-7 bg-green-500 rounded-full relative transition-all duration-300 shadow-inner";
+                 dot.style.right = '4px'; dot.style.left = 'auto'; label.innerText = 'Active'; label.className = 'text-xs font-bold text-green-600 uppercase';
+             } else {
+                 toggle.className = "w-14 h-7 bg-red-500 rounded-full relative transition-all duration-300 shadow-inner";
+                 dot.style.left = '4px'; dot.style.right = 'auto'; label.innerText = 'Inactive'; label.className = 'text-xs font-bold text-red-600 uppercase';
+             }
+         }
+         
+         function openEightColConfig() { 
+             document.getElementById('eightColModal').classList.remove('hidden'); 
+             lucide.createIcons();
+         }
+         function closeEightColModal() { document.getElementById('eightColModal').classList.add('hidden'); }
+         
+         function addNewSection(type, config = '') {
+             const slots = type === 8 ? 8 : type;
+             dashboards[currentEditingIndex].sections.push({ id: Date.now(), type, config, components: Array(slots).fill('') });
+             closeEightColModal();
+             renderSections();
+         }
+         
+         function deleteSection(idx) { dashboards[currentEditingIndex].sections.splice(idx, 1); renderSections(); }
+         
+         function renderSections() {
+             const container = document.getElementById('sectionListContainer');
+             const empty = document.getElementById('sectionEmptyState');
+             const sections = dashboards[currentEditingIndex].sections;
+             
+             if (sections.length === 0) { 
+                 empty.classList.remove('hidden'); 
+                 container.innerHTML = ''; 
+                 return; 
+             }
+             
+             empty.classList.add('hidden');
+             container.innerHTML = sections.map((sec, sIdx) => {
+                 const layoutText = sec.type === 8 ? `8 Column (${sec.config})` : `${sec.type} Column Layout`;
+                 let containerClass = `grid gap-6 sortable-components ${getGridClass(sec.type)}`;
+                 
+                 if (sec.type === 8) {
+                     if (sec.config === 'scroller') containerClass = "scroller-container custom-scroll sortable-components";
+                     else containerClass = "flex flex-wrap gap-6 sortable-components";
+                 }
+         
+                 return `
+                 <div class="relative group border border-slate-200 rounded-2xl bg-white shadow-sm p-6 section-item" data-id="${sIdx}">
+         <div class="drag-handle absolute -top-3 left-6 bg-[#1e293b] text-white px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest z-10 flex items-center gap-2">
+         <i data-lucide="grip-vertical" class="w-3 h-3 drag-handle"></i>
+         ${layoutText}
+         </div>
+                     <button onclick="deleteSection(${sIdx})" class="absolute top-2 right-2 text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                     
+                     <div class="${containerClass}" data-section-index="${sIdx}">
+                         ${sec.components.map((c, cIdx) => `
+                             <div onclick="openSelector(${sIdx}, ${cIdx})" 
+                                  class="component-slot min-h-[100px] rounded-xl border-2 border-dashed border-slate-100 flex flex-col hover:border-blue-300 transition-all cursor-pointer overflow-hidden bg-slate-50/30 ${sec.config === 'scroller' ? 'scroller-item' : ''} ${sec.type === 8 && sec.config === 'wrap' ? 'w-[calc(20%-1.2rem)]' : ''}" 
+                                  data-comp-index="${cIdx}">
+                                 ${c ? renderExactUI(c, sIdx, cIdx) : `
+                                     <div class="flex-1 flex flex-col items-center justify-center py-6">
+                                         <i data-lucide="plus" class="w-5 h-5 text-slate-300 mb-1"></i>
+                                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Add Component</span>
+                                     </div>
+                                 `}
+                             </div>
+                         `).join('')}
+                     </div>
+                 </div>
+             `}).join('');
+             
+             lucide.createIcons();
+             initDragAndDrop();
+         }
+         
+         function initDragAndDrop() {
+             new Sortable(document.getElementById('sectionListContainer'), {
+                 animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost',
+                 onEnd: (evt) => {
+                     const sections = dashboards[currentEditingIndex].sections;
+                     const item = sections.splice(evt.oldIndex, 1)[0];
+                     sections.splice(evt.newIndex, 0, item);
+                 }
+             });
+             document.querySelectorAll('.sortable-components').forEach(el => {
+                 new Sortable(el, {
+                     animation: 150, ghostClass: 'sortable-ghost',
+                     onEnd: (evt) => {
+                         const sIdx = evt.from.dataset.sectionIndex;
+                         const components = dashboards[currentEditingIndex].sections[sIdx].components;
+                         const item = components.splice(evt.oldIndex, 1)[0];
+                         components.splice(evt.newIndex, 0, item);
+                     }
+                 });
+             });
+         }
+         
+         function getGridClass(type) {
+             if(type === 1) return "grid-cols-1";
+             if(type === 2) return "md:grid-cols-2";
+             if(type === 3) return "md:grid-cols-3";
+             if(type === 5) return "md:grid-cols-5";
+             return "";
+         }
+         
+         function renderExactUI(name, sIdx, cIdx) {
+         const data = componentsData[name];
+         let content = '';
+         
+         if (data.type === 'header') {
+         const isRisk = data.sub === "HIGH RISK";
+         const indicatorPos = isRisk ? "left: 72%" : "left: 86%";
+         content = `
+         <div class="bg-[#0f111a] text-white p-6 flex items-center justify-between w-full h-full min-h-[140px]">
+             <div class="flex items-center gap-12 border-r border-slate-800 pr-12 min-w-max">
+                 <div class="flex flex-col"><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest opacity-60">Operational Summary</span>
+                 <h2 class="text-2xl font-black italic uppercase tracking-tighter leading-tight">${name}</h2></div>
+             </div>
+             <div class="flex items-center gap-10 flex-1 px-12 justify-center">
+                 <div class="relative w-12 h-8 text-red-500 opacity-80"><svg viewBox="0 0 50 20" class="w-full h-full stroke-current fill-none" stroke-width="2.5"><path d="M0 10 L10 10 L14 4 L18 16 L22 2 L26 18 L30 10 L50 10" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                 <div class="flex flex-col gap-2 min-w-[180px]">
+                     <div class="flex items-baseline gap-3"><span class="text-5xl font-black tracking-tighter">${data.val}</span><span class="px-2.5 py-1 text-[10px] font-black border rounded uppercase ${data.badge}">${data.sub}</span></div>
+                     <div class="w-full"><div class="ai-index-bar"><div class="ai-indicator" style="${indicatorPos}"></div></div><span class="text-[8px] font-black text-slate-500 uppercase tracking-tighter mt-1 block text-center opacity-70">AI Verified Index</span></div>
+                 </div>
+             </div>
+             <div class="flex items-center gap-10 border-l border-slate-800 pl-12 min-w-max">
+                 ${data.items.map(i => `<div class="flex flex-col"><span class="text-[9px] font-black text-slate-500 uppercase opacity-60">${i.l}</span><div class="flex items-center gap-1.5 text-xl font-black ${i.c}">${i.v} <i data-lucide="trending-up" class="w-4 h-4"></i></div></div>`).join('')}
+             </div>
+         </div>`;
+         } 
+         else if (data.type === 'kpi-risk') {
+         const config = {
+             blue: { text: 'text-blue-600', bg: 'bg-blue-600', border: 'border-blue-600', lightBg: 'bg-blue-50/50' },
+             orange: { text: 'text-orange-600', bg: 'bg-orange-600', border: 'border-orange-500', lightBg: 'bg-orange-50/50' },
+             emerald: { text: 'text-emerald-600', bg: 'bg-emerald-600', border: 'border-emerald-500', lightBg: 'bg-emerald-50/50' },
+             red: { text: 'text-red-600', bg: 'bg-red-600', border: 'border-red-500', lightBg: 'bg-red-50/50' },
+             teal: { text: 'text-teal-600', bg: 'bg-teal-600', border: 'border-teal-500', lightBg: 'bg-teal-50/50' },
+             indigo: { text: 'text-indigo-600', bg: 'bg-indigo-600', border: 'border-indigo-500', lightBg: 'bg-indigo-50/50' }
+         };
+         const theme = config[data.color] || config.blue;
+         
+         // Determine Footer Type: Standard Stat vs AI Button
+         let footerHtml = '';
+         if (data.footer && data.footer.type === 'ai-button') {
+             footerHtml = `
+                 <div class="px-4 py-3 bg-white mt-auto">
+                     <button class="w-full py-2 rounded-lg border border-teal-100 bg-teal-50/30 text-[9px] font-black text-teal-700 uppercase tracking-widest hover:bg-teal-50 transition-colors flex items-center justify-center gap-2">
+                         <i data-lucide="sparkles" class="w-3 h-3"></i>
+                         ${data.footer.l}
+                     </button>
+                 </div>`;
+         } else if (data.footer) {
+             footerHtml = `
+                 <div class="px-5 py-3 ${theme.lightBg} flex justify-between items-center border-t border-slate-50 mt-auto">
+                     <div class="flex items-center gap-2">
+                         ${data.footer.icon ? `<i data-lucide="${data.footer.icon}" class="w-3.5 h-3.5 ${theme.text}"></i>` : ''}
+                         <span class="text-[10px] font-black ${theme.text} uppercase tracking-tight">${data.footer.l}</span>
+                     </div>
+                     <div class="flex items-center gap-2">
+                         <span class="text-base font-black ${theme.text}">${data.footer.v}</span>
+                         <span class="text-[8px] font-bold ${theme.text} opacity-80">${data.footer.t}</span>
+                     </div>
+                 </div>`;
+         }
+         
+         content = `
+         <div class="comp-preview-card border-t-4 ${theme.border} h-full flex flex-col shadow-[0_4px_20px_rgba(0,0,0,0.03)] border-x border-b border-slate-100">
+             <div class="p-5 flex-1 bg-white">
+                 <div class="flex justify-between items-start mb-4">
+                     <h3 class="text-[11px] font-black text-slate-900 uppercase tracking-tight">${name}</h3>
+                     <i data-lucide="bar-chart-2" class="w-3 h-3 text-slate-200"></i>
+                 </div>
+         
+                 <div class="flex items-start gap-2 mb-2">
+                     <span class="text-4xl font-black text-slate-900 tracking-tighter">${data.val}</span>
+                     <div class="flex flex-col">
+                         <span class="text-[8px] font-bold ${theme.text} uppercase leading-none mt-1">${data.trend}</span>
+                         <span class="text-[7px] font-black text-slate-400 uppercase tracking-tighter mt-0.5">${data.sub}</span>
+                     </div>
+                 </div>
+         
+                 <div class="w-full h-1 bg-slate-100 rounded-full mb-6 overflow-hidden">
+                     <div class="h-full ${theme.bg}" style="width: ${data.val}"></div>
+                 </div>
+         
+                 <div class="space-y-4">
+                     ${data.items.map(i => `
+                         <div class="flex justify-between items-center text-[10px] border-b border-slate-50 pb-2.5">
+                             <div class="flex items-center gap-2">
+                                 <div class="w-2 h-2 rounded-full ${i.c}"></div>
+                                 <span class="font-bold text-slate-600">${i.l}</span>
+                             </div>
+                             <div class="flex items-center gap-2">
+                                 <span class="font-black text-slate-900">${i.v}</span>
+                                 ${i.t ? `<span class="text-[8px] font-bold ${i.tc || 'text-slate-400'}">${i.t}</span>` : ''}
+                             </div>
+                         </div>
+                     `).join('')}
+                 </div>
+             </div>
+             ${footerHtml}
+         </div>`;
+         }
+         else if (data.type === 'table-log') {
+         content = `
+         <div class="p-6 w-full bg-white rounded-2xl border border-slate-100 shadow-sm">
+             <div class="flex justify-between items-center mb-6">
+                 <div class="flex items-center gap-3">
+                     <i data-lucide="file-text" class="w-5 h-5 text-slate-900"></i>
+                     <h3 class="text-sm font-black text-slate-900 uppercase italic tracking-tighter">${name}</h3>
+                 </div>
+                 <div class="flex items-center gap-4 text-slate-400">
+                     <i data-lucide="search" class="w-4 h-4 cursor-pointer hover:text-slate-900"></i>
+                     <i data-lucide="filter" class="w-4 h-4 cursor-pointer hover:text-slate-900"></i>
+                     <i data-lucide="download" class="w-4 h-4 cursor-pointer hover:text-slate-900"></i>
+                     <i data-lucide="maximize" class="w-4 h-4 cursor-pointer hover:text-slate-900"></i>
+                     <i data-lucide="settings" class="w-4 h-4 cursor-pointer hover:text-slate-900"></i>
+                 </div>
+             </div>
+         
+             <div class="overflow-x-auto custom-scroll border rounded-xl border-slate-100">
+                 <table class="w-full text-left border-collapse text-[10px]">
+                     <thead class="bg-slate-50/50 border-b border-slate-100">
+                         <tr class="font-bold text-slate-400 uppercase tracking-tighter">
+                             <th class="p-4 whitespace-nowrap">Date</th>
+                             <th class="p-4 whitespace-nowrap">Store #</th>
+                             <th class="p-4 whitespace-nowrap">Actual Sales ($)</th>
+                             <th class="p-4 whitespace-nowrap">Labor %</th>
+                             <th class="p-4 whitespace-nowrap text-red-500">Loss %</th>
+                             <th class="p-4 whitespace-nowrap">Total Loss</th>
+                             <th class="p-4 whitespace-nowrap">Early In</th>
+                             <th class="p-4 whitespace-nowrap">Late Out</th>
+                             <th class="p-4 whitespace-nowrap">OT Loss</th>
+                             <th class="p-4 whitespace-nowrap">Break Loss</th>
+                         </tr>
+                     </thead>
+                     <tbody class="divide-y divide-slate-50">
+                         <tr class="hover:bg-slate-50/30 transition-colors">
+                             <td class="p-4 font-black text-blue-600">01/05/2026</td>
+                             <td class="p-4 font-bold text-slate-900">1018</td>
+                             <td class="p-4 font-black text-slate-900">$32,862.63</td>
+                             <td class="p-4 font-bold text-slate-500">18.71%</td>
+                             <td class="p-4 font-black text-red-600">0.96%</td>
+                             <td class="p-4 font-bold text-slate-400">$314.65</td>
+                             <td class="p-4 font-bold text-slate-400">$36.61</td>
+                             <td class="p-4 font-bold text-slate-400">$267.04</td>
+                             <td class="p-4 font-bold text-slate-400">$23.50</td>
+                             <td class="p-4 font-bold text-slate-400">$11.00</td>
+                         </tr>
+                         <tr class="hover:bg-slate-50/30 transition-colors">
+                             <td class="p-4 font-black text-blue-600">12/29/2025</td>
+                             <td class="p-4 font-bold text-slate-900">1018</td>
+                             <td class="p-4 font-black text-slate-900">$58,555.81</td>
+                             <td class="p-4 font-bold text-slate-500">18.66%</td>
+                             <td class="p-4 font-black text-red-600">1.46%</td>
+                             <td class="p-4 font-bold text-slate-400">$855.45</td>
+                             <td class="p-4 font-bold text-slate-400">$275.48</td>
+                             <td class="p-4 font-bold text-slate-400">$358.62</td>
+                             <td class="p-4 font-bold text-slate-400">$211.36</td>
+                             <td class="p-4 font-bold text-slate-400">$10.00</td>
+                         </tr>
+                         <tr class="hover:bg-slate-50/30 transition-colors">
+                             <td class="p-4 font-black text-blue-600">12/22/2025</td>
+                             <td class="p-4 font-bold text-slate-900">1018</td>
+                             <td class="p-4 font-black text-slate-900">$55,336.98</td>
+                             <td class="p-4 font-bold text-slate-500">17.76%</td>
+                             <td class="p-4 font-black text-red-600">1.28%</td>
+                             <td class="p-4 font-bold text-slate-400">$708.21</td>
+                             <td class="p-4 font-bold text-slate-400">$82.78</td>
+                             <td class="p-4 font-bold text-slate-400">$500.83</td>
+                             <td class="p-4 font-bold text-slate-400">$103.18</td>
+                             <td class="p-4 font-bold text-slate-400">$21.42</td>
+                         </tr>
+                     </tbody>
+                 </table>
+             </div>
+         </div>`;
+         }
+         else if (data.type === 'table-perf') {
+         const config = {
+             pink: { border: 'border-pink-500', text: 'text-pink-500', bg: 'bg-pink-500' },
+             orange: { border: 'border-orange-500', text: 'text-orange-500', bg: 'bg-orange-500' },
+             blue: { border: 'border-blue-500', text: 'text-blue-500', bg: 'bg-blue-500' },
+             emerald: { border: 'border-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500' }
+         };
+         const theme = config[data.color] || config.blue;
+         
+         content = `
+         <div class="comp-preview-card border-t-4 ${theme.border} h-full bg-white shadow-sm overflow-hidden flex flex-col">
+             <div class="p-4 border-b border-slate-50 flex items-center gap-3">
+                 <div class="p-1.5 rounded-lg bg-slate-50 ${theme.text}">
+                     <i data-lucide="${data.icon}" class="w-4 h-4"></i>
+                 </div>
+                 <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest">${name}</h3>
+             </div>
+             <div class="p-4 flex-1">
+                 <table class="w-full text-left text-[9px] border-collapse">
+                     <thead>
+                         <tr class="text-slate-400 font-bold uppercase tracking-tighter">
+                             <th class="pb-4 font-black">KPI & Weight</th>
+                             <th class="pb-4 text-center">CUR</th>
+                             <th class="pb-4 text-center">WTD</th>
+                             <th class="pb-4 text-center">LW</th>
+                             <th class="pb-4 text-right">SCORE</th>
+                         </tr>
+                     </thead>
+                     <tbody class="divide-y divide-slate-50">
+                         ${data.items.map(i => `
+                             <tr>
+                                 <td class="py-4">
+                                     <div class="flex items-center gap-2">
+                                         <div class="w-1.5 h-1.5 rounded-full ${theme.bg} opacity-60"></div>
+                                         <span class="font-bold text-slate-500">${i.l}</span>
+                                     </div>
+                                 </td>
+                                 <td class="py-4 text-center font-black text-slate-900">${i.cur}</td>
+                                 <td class="py-4 text-center font-bold text-slate-400">${i.wtd}</td>
+                                 <td class="py-4 text-center font-bold text-slate-400">${i.lw}</td>
+                                 <td class="py-4 text-right font-black text-slate-900">${i.score}</td>
+                             </tr>
+                         `).join('')}
+                     </tbody>
+                 </table>
+             </div>
+         </div>`;
+         }
+         else if (data.type === 'chart-weekly') {
+         content = `<div class="p-6 w-full"><div class="flex justify-between items-center mb-6"><h3 class="label-caps">${name}</h3><div class="flex gap-1 border rounded bg-slate-50 p-1"><button class="bg-white shadow-sm p-1 rounded"><i data-lucide="clock" class="w-3 h-3"></i></button></div></div>
+             <div class="h-44 flex items-end justify-between px-2 gap-2">
+                 ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d, i) => `
+                 <div class="flex-1 flex flex-col items-center">
+                     <div class="w-full rounded-sm overflow-hidden flex flex-col-reverse" style="height: ${[80,110,80,140,220,70,60][i]}px">
+                         <div class="bg-purple-500 h-[20%]"></div><div class="bg-blue-500 h-[40%]"></div><div class="bg-[#1e3a8a] h-[30%]"></div><div class="bg-[#a7f3d0] h-[10%]"></div>
+                     </div><span class="text-[9px] mt-2 font-bold text-slate-400 uppercase">${d}</span>
+                 </div>`).join('')}
+             </div></div>`;
+         } 
+         else if (data.type === 'chart-trend') {
+         content = `<div class="p-6 w-full"><div class="flex justify-between items-center mb-6"><h3 class="label-caps">${name}</h3><div class="flex gap-1 border rounded bg-slate-50 p-1 text-[9px] font-black"><span class="bg-blue-600 text-white px-2 py-0.5 rounded">7D</span></div></div>
+             <div class="h-44 relative flex items-end justify-between px-2 gap-2">
+                 <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none"><path d="M 0 60 Q 100 40 200 50 T 400 80" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 2" /><path d="M 0 120 L 100 110 L 200 130 L 300 100 L 400 125" fill="none" stroke="#1e293b" stroke-width="2" /></svg>
+                 ${['Jan 21','Jan 22','Jan 23','Jan 24','Jan 25','Jan 26','Jan 27'].map((d, i) => `
+                 <div class="flex-1 flex flex-col items-center z-10"><div class="w-full bg-[#93c5fd] rounded-sm" style="height: ${[80,110,110,120,130,120,110][i]}px"></div><span class="text-[9px] mt-2 font-bold text-slate-400 uppercase whitespace-nowrap">${d}</span></div>`).join('')}
+             </div></div>`;
+         } 
+         else if (data.type === 'work-tile') {
+         content = `<div class="bg-white p-6 text-center w-full min-w-[150px]"><i data-lucide="${data.icon}" class="w-4 h-4 mx-auto mb-2 text-slate-400"></i><div class="text-2xl font-black text-slate-900 mb-1">${data.val}</div><div class="label-caps opacity-60">${name}</div></div>`;
+         } 
+         else if (data.type === 'mini') {
+         content = `<div class="comp-preview-card"><div class="comp-header-line ${data.header}"></div><div class="p-3"><div class="label-caps mb-1">${name}</div><div class="flex items-baseline gap-2 mb-2"><span class="text-xl font-black">${data.val}</span><span class="text-[9px] font-bold text-blue-500">${data.sub}</span></div>
+             <div class="border-t border-slate-50 pt-1 flex justify-between text-[9px] font-black uppercase"><span>Today</span><span class="${data.items[0].c}">${data.items[0].v}</span></div></div></div>`;
+         } 
+         else if (data.type === 'kpi') {
+         content = `<div class="comp-preview-card"><div class="comp-header-line ${data.header}"></div><div class="p-4 flex-1"><div class="flex justify-between items-start mb-3"><span class="label-caps">${name}</span><span class="status-pill-small ${data.badge}">${data.sub}</span></div><div class="flex items-center gap-3 mb-4"><span class="value-huge">${data.val}</span></div>
+             <div class="space-y-2 border-t border-slate-50 pt-3">${data.items.map(i => `<div class="flex justify-between items-center text-[10px] font-bold uppercase"><span>${i.l}</span><span class="${i.c}">${i.v}</span></div>`).join('')}</div></div></div>`;
+         }
+         else {
+         content = `<div class="comp-preview-card"><div class="comp-header-line ${data.header}"></div><div class="p-4 flex-1"><div class="flex justify-between items-start mb-3"><span class="label-caps">${name}</span></div><div class="flex items-center gap-3 mb-4"><span class="value-huge">${data.val}</span><span class="status-pill-small ${data.badge}">${data.sub}</span></div></div></div>`;
+         }
+         
+         return `<div class="w-full h-full relative group">
+         <button onclick="event.stopPropagation(); clearSlot(${sIdx}, ${cIdx})" class="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="x-circle" class="w-4 h-4"></i></button>
+         ${content}
+         </div>`;
+         }
+         
+         function openSelector(sIdx, cIdx) {
+             activeSelectionContext = { sIdx, cIdx };
+             const sectionType = dashboards[currentEditingIndex].sections[sIdx].type;
+             const list = document.getElementById('modalOptionsList');
+             const filtered = Object.keys(componentsData).filter(name => {
+                 const c = componentsData[name];
+                 return c.col === sectionType || c.col_alt === sectionType;
+             });
+             list.innerHTML = filtered.map(name => {
+                 const data = componentsData[name];
+                 return `<button onclick="selectComponent('${name}')" class="group relative bg-white border border-slate-200 p-6 rounded-2xl text-left flex flex-col gap-4 overflow-hidden hover:border-blue-500 transition-all">
+                     <div class="flex justify-between items-start"><div class="p-2.5 bg-slate-50 rounded-xl group-hover:bg-blue-50 transition-colors"><i data-lucide="${data.icon || 'layout'}" class="w-6 h-6 text-slate-400 group-hover:text-blue-500"></i></div></div>
+                     <div><div class="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-1 group-hover:text-blue-600 transition-colors">${name}</div></div>
+                     <div class="absolute bottom-0 left-0 w-full h-1 bg-slate-100"><div class="h-full bg-blue-500 transition-all duration-500 w-0 group-hover:w-full"></div></div>
+                 </button>`;
+             }).join('');
+             document.getElementById('componentModal').classList.remove('hidden');
+             lucide.createIcons();
+         }
+         
+         function selectComponent(name) {
+             const { sIdx, cIdx } = activeSelectionContext;
+             dashboards[currentEditingIndex].sections[sIdx].components[cIdx] = name;
+             closeModal(); renderSections();
+         }
+         
+         function openPreview() {
+         const preview = document.getElementById('previewModal');
+         const container = document.getElementById('previewContent');
+         const sections = dashboards[currentEditingIndex].sections;
+         
+         container.innerHTML = sections.map(sec => {
+         let containerClass = `grid gap-6 ${getGridClass(sec.type)}`;
+         
+         if (sec.type === 8) {
+         containerClass =
+         sec.config === 'scroller'
+         ? 'preview-scroller-5'
+         : 'preview-wrap-5';
+         }
+         
+         return `
+         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="${containerClass}">
+               ${sec.components.map(c =>
+                  c ? `<div class="preview-tile min-h-[120px]">${renderExactUI(c)}</div>` : ''
+               ).join('')}
+            </div>
+         </div>
+         `;
+         }).join('');
+         
+         preview.classList.remove('hidden');
+         lucide.createIcons();
+         }
+         
+         function closePreview() {
+         document.getElementById('previewModal').classList.add('hidden');
+         }
+         
+         function clearSlot(sIdx, cIdx) { dashboards[currentEditingIndex].sections[sIdx].components[cIdx] = ''; renderSections(); }
+         function closeModal() { document.getElementById('componentModal').classList.add('hidden'); }
+         function showListView() { document.getElementById('listView').classList.remove('hidden'); document.getElementById('editView').classList.add('hidden'); renderTable(); }
+         function saveAll() { alert('Dashboard configuration saved successfully!'); showListView(); }
+      </script>
+   </body>
+</html>
